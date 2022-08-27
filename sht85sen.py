@@ -11,13 +11,6 @@ from sensor_pack.base_sensor import BaseSensor, Iterator
 import time
 
 
-@micropython.native
-def _check_value(value: int, valid_range, error_msg: str) -> int:
-    if value not in valid_range:
-        raise ValueError(error_msg)
-    return value
-
-
 class Sht85(BaseSensor, Iterator):
     """Class for work with Sensirion SHT85 sensor"""
 
