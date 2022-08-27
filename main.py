@@ -18,7 +18,7 @@ if __name__ == '__main__':
     i2c = I2C(0, freq=400_000)  # on Arduino Nano RP2040 Connect tested
     adaptor = I2cAdapter(i2c)
     # ps - humidity sensor
-    hum_sen = sht85sen.Sht85(adaptor)
+    hum_sen = sht85sen.Sht85(adaptor, 0x44, True)
 
     # если у вас посыпались исключения, чего у меня на макетной плате с али и проводами МГТВ не наблюдается,
     # то проверьте все соединения.
