@@ -104,7 +104,7 @@ class Sht85(BaseSensor, Iterator):
                     raise IOError("Input data broken!")
         raw_temp, raw_rel_hum = (b[0] << 8) | b[1], (b[3] << 8) | b[4]
         #
-        return 2.670328832E-3 * raw_temp - 45, 1.52590219E-3 * raw_rel_hum - 49
+        return 2.670328832E-3 * raw_temp - 45, 1.52590219E-3 * raw_rel_hum
 
     def set_periodic_acquisition_mode(self, repeatability: int, meas_per_sec: int):
         """Запускает процесс периодических измерений температуры и влажности датчиком.
