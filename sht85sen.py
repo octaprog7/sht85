@@ -98,12 +98,10 @@ class Sht85(BaseSensor, Iterator):
 
         b = self._read_register(0x00, 6)
         if self.check_crc:
-            crc = crc1wire.crc8(b[:2])
-            if crc != b[3]:
-                raise IOError("Input data broken!")
-            crc = crc1wire.crc8(b[3:5])
-            if crc != b[5]:
-                raise IOError("Input data broken!")
+            for ofs in (0, 3):
+                crc = crc1wire.crc8(b[ofs:ofs+2])
+                if crc != b[ofs+2]:
+                    raise IOError("Input data broken!")
         raw_temp, raw_rel_hum = (b[0] << 8) | b[1], (b[3] << 8) | b[4]
         #
         return 2.670328832E-3 * raw_temp - 45, 1.52590219E-3 * raw_rel_hum - 49
