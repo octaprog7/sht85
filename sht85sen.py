@@ -9,6 +9,7 @@ import micropython
 from sensor_pack import bus_service
 from sensor_pack.base_sensor import BaseSensor, Iterator, check_value
 import time
+import crc1wire
 
 
 class Sht85(BaseSensor, Iterator):
@@ -54,11 +55,12 @@ class Sht85(BaseSensor, Iterator):
             d = 2, 1, .5, .25, .1
             return 1_000_000 * d[self.meas_per_sec]     # in us !!!
 
-    def __init__(self, adapter: bus_service.I2cAdapter, address: int = 0x44):
+    def __init__(self, adapter: bus_service.I2cAdapter, address: int = 0x44, check_crc=True):
         super().__init__(adapter, address, False)
         self.mode = -1      # 0 - single shot acquisition mode; 1 - periodic acquisition mode
         self.repeatability = -1     # повторяемость
         self.meas_per_sec = -1      # кол-во измерений в секунду
+        self.check_crc = check_crc       # проверка считанных значений
 
     def _read_register(self, reg_addr, bytes_count=2) -> bytes:
         """считывает из регистра датчика значение.
@@ -85,17 +87,23 @@ class Sht85(BaseSensor, Iterator):
         self.repeatability = repeatability
         self.mode = 0  # single shot mode
 
-    def read_temp_hum_pair(self, check_crc: bool = False) -> tuple:
+    def read_temp_hum_pair(self) -> tuple:
         """Считывает из датчика пару сырых значений температура-влажность и
         преобразует их в градусы Цельсия и проценты.
         Внимание! После запуска однократного измерения или запуска периодических измерений
         нужно ПОДОЖДАТЬ их результатов!!! Сколько ждать микросекунд возвращает функция get_conversion_cycle_time !"""
-        # print(f"read_temp_hum_pair.\t self.mode: {self.mode}")
         if 1 == self.mode:
             t = 0xE0, 0x00
             self._send_cmd(t)   # FETCH (Table 10: Fetch Data command)
 
         b = self._read_register(0x00, 6)
+        if self.check_crc:
+            crc = crc1wire.crc8(b[:2])
+            if crc != b[3]:
+                raise IOError("Input data broken!")
+            crc = crc1wire.crc8(b[3:5])
+            if crc != b[5]:
+                raise IOError("Input data broken!")
         raw_temp, raw_rel_hum = (b[0] << 8) | b[1], (b[3] << 8) | b[4]
         #
         return 2.670328832E-3 * raw_temp - 45, 1.52590219E-3 * raw_rel_hum - 49
