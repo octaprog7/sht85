@@ -24,6 +24,20 @@ if __name__ == '__main__':
     # то проверьте все соединения.
     # Радиотехника - наука о контактах! РТФ-Чемпион!
     hs_id = hum_sen.get_id()
-    hum_sen.set_single_shot_mode(0)
     print(f"Sensor ID: {hex(hs_id)}")
     print(f"Status register:", hex(hum_sen.get_status()))
+    hum_sen.start_single_meas(0)
+    delay = hum_sen.get_conversion_cycle_time()
+    time.sleep_us(delay)    # не забывай вызывать ожидание результата, или что-то делай и измеряй время!
+    t, h = hum_sen.read_temp_hum_pair()
+    print(f"Temperature: {t}\thumidity: {h}\tdelay: {delay}")
+    print("Switch to periodic acquisition mode and use iterator + delay")
+    hum_sen.set_periodic_acquisition_mode(0, 0)
+    delay = hum_sen.get_conversion_cycle_time()
+    time.sleep_us(delay)
+    #
+    for temp, hum in hum_sen:
+        print(f"Temperature: {temp}\thumidity: {hum}\tdelay: {delay}")
+        delay = hum_sen.get_conversion_cycle_time()
+        time.sleep_us(delay)
+    
