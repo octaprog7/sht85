@@ -7,7 +7,7 @@
 import micropython
 
 from sensor_pack import bus_service
-from sensor_pack.base_sensor import BaseSensor, Iterator
+from sensor_pack.base_sensor import BaseSensor, Iterator, check_value
 import time
 
 
@@ -36,7 +36,7 @@ class Sht85(BaseSensor, Iterator):
         0                   low
         1                   medium
         2                   high"""
-        _check_value(repeatability, range(0, 3), f"Invalid value repeatability: {repeatability}")
+        check_value(repeatability, range(0, 3), f"Invalid value repeatability: {repeatability}")
         x = 0x16, 0x0B, 0x00
         t = 0x24, x[repeatability]
         b = bytearray(t)
@@ -50,8 +50,8 @@ class Sht85(BaseSensor, Iterator):
         return 2.670328832E-3*raw_temp - 45, 1.52590219E-3*raw_rel_hum - 49
 
     def set_periodic_acquisition_mode(self, repeatability: int, meas_per_sec: int):
-        _check_value(repeatability, range(0, 3), f"Invalid value repeatability: {repeatability}")
-        _check_value(meas_per_sec, range(0, 5), f"Invalid value measurements per second: {meas_per_sec}")
+        check_value(repeatability, range(0, 3), f"Invalid value repeatability: {repeatability}")
+        check_value(meas_per_sec, range(0, 5), f"Invalid value measurements per second: {meas_per_sec}")
         msb = 0x20, 0x21, 0x22, 0x23, 0x27
         lsb = (0x32, 0x24, 0x2F), (0x30, 0x26, 0x2D), (0x36, 0x20, 0x2B), (0x34, 0x22, 0x29), (0x37, 0x21, 0x2A)
         t = msb[meas_per_sec], lsb[meas_per_sec][repeatability]
