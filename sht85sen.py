@@ -53,7 +53,7 @@ class Sht85(BaseSensor, Iterator):
 
         if 1 == self.mode:  # periodic acquisition mode
             d = 2, 1, .5, .25, .1
-            return 1_000_000 * d[self.meas_per_sec]     # in us !!!
+            return int(1_000_000 * d[self.meas_per_sec])     # in us !!!
 
     def __init__(self, adapter: bus_service.I2cAdapter, address: int = 0x44, check_crc=True):
         super().__init__(adapter, address, False)
@@ -61,6 +61,22 @@ class Sht85(BaseSensor, Iterator):
         self.repeatability = -1     # повторяемость
         self.meas_per_sec = -1      # кол-во измерений в секунду
         self.check_crc = check_crc       # проверка считанных значений
+
+    @staticmethod
+    def check_data(buf: bytes):
+        """Проверка данных в последовательности на правильность, путем сравнения контрольной
+        суммы из последовательности с вычисленной контрольной суммой"""
+        if not len(buf) in (3, 6):
+            raise ValueError("Invalid buffer length!")
+        if 3 == len(buf):
+            offsets = (0,)
+        else:
+            offsets = 0, 3
+        for ofs in offsets:
+            crc = crc1wire.crc8(buf[ofs:ofs + 2])
+            val = buf[ofs + 2]
+            if crc != val:
+                raise IOError(f"Input data broken! Bad CRC! Calculated crc8: {hex(crc)} != {hex(val)}")
 
     def _read_register(self, reg_addr, bytes_count=2) -> bytes:
         """считывает из регистра датчика значение.
@@ -88,20 +104,18 @@ class Sht85(BaseSensor, Iterator):
         self.mode = 0  # single shot mode
 
     def read_temp_hum_pair(self) -> tuple:
-        """Считывает из датчика пару сырых значений температура-влажность и
+        """Считывает из датчика пару сырых значений температура-относит. влажность и
         преобразует их в градусы Цельсия и проценты.
         Внимание! После запуска однократного измерения или запуска периодических измерений
-        нужно ПОДОЖДАТЬ их результатов!!! Сколько ждать микросекунд возвращает функция get_conversion_cycle_time !"""
+        нужно ПОДОЖДАТЬ их результатов!!!
+        Сколько ждать микросекунд(!) возвращает функция get_conversion_cycle_time !"""
         if 1 == self.mode:
             t = 0xE0, 0x00
             self._send_cmd(t)   # FETCH (Table 10: Fetch Data command)
 
         b = self._read_register(0x00, 6)
         if self.check_crc:
-            for ofs in (0, 3):
-                crc = crc1wire.crc8(b[ofs:ofs+2])
-                if crc != b[ofs+2]:
-                    raise IOError("Input data broken!")
+            Sht85.check_data(b)
         raw_temp, raw_rel_hum = (b[0] << 8) | b[1], (b[3] << 8) | b[4]
         #
         return 2.670328832E-3 * raw_temp - 45, 1.52590219E-3 * raw_rel_hum
@@ -127,7 +141,6 @@ class Sht85(BaseSensor, Iterator):
         msb = 0x20, 0x21, 0x22, 0x23, 0x27
         lsb = (0x32, 0x24, 0x2F), (0x30, 0x26, 0x2D), (0x36, 0x20, 0x2B), (0x34, 0x22, 0x29), (0x37, 0x21, 0x2A)
         t = msb[meas_per_sec], lsb[meas_per_sec][repeatability]
-        # print("t=", t)
         self._send_cmd(t)
         self.repeatability = repeatability
         self.mode = 1  # periodic acquisition mode
@@ -138,6 +151,8 @@ class Sht85(BaseSensor, Iterator):
         self._send_cmd(t)
         time.sleep_us(500)
         b = self._read_register(0x00, 6)
+        if self.check_crc:
+            Sht85.check_data(b)
         return b[0] << 24 | b[1] << 16 | b[3] << 8 | b[4]
 
     def soft_reset(self):
@@ -169,6 +184,8 @@ class Sht85(BaseSensor, Iterator):
         self._send_cmd(t)
         time.sleep_us(500)
         b = self._read_register(0x00, 3)
+        if self.check_crc:
+            Sht85.check_data(b)
         return b[0] << 8 | b[1]
 
     def __next__(self):
