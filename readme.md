@@ -9,3 +9,9 @@ Supply voltage SHT85 from 2.15 to 5.5 volts, typical 3.3 Volt! Use four wires to
 2. GND
 3. SDA
 4. SCL
+
+# Pictures
+## IDE
+![alt text](https://github.com/octaprog7/sht85/blob/master/ide85.png)
+## Breadboard
+![alt text](https://github.com/octaprog7/sht85/blob/master/sht85.png)
