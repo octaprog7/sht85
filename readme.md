@@ -5,6 +5,14 @@ Just connect your SHT85 board to Arduino, ESP or any other board with MicroPytho
 
 Supply voltage SHT85 from 2.15 to 5.5 volts, typical 3.3 Volt! Use four wires to connect.
 
+Copy the following files to your board:
+    main.py
+    sht85sen.py
+    crc1wire.py
+    sensor_pack folder
+
+Then open main.py in your IDE and run it!
+
 1. +3.3 V
 2. GND
 3. SDA
