@@ -2,7 +2,8 @@
 # MIT license
 # Copyright (c) 2022 Roman Shevchik   goctaprog@gmail.com
 
-"""Sensirion SHT85 micropython module"""
+"""Sensirion SHT85 micropython module.
+https://sensirion.com/products/catalog/SHT85/"""
 
 import micropython
 
@@ -12,7 +13,8 @@ import time
 
 
 class Sht85(BaseSensor, Iterator):
-    """Class for work with Sensirion SHT85 sensor"""
+    """Class for work with Sensirion SHT85 sensor.
+    https://sensirion.com/products/catalog/SHT85/"""
 
     @staticmethod
     def _check_rep(repeatability) -> int:
@@ -27,6 +29,8 @@ class Sht85(BaseSensor, Iterator):
         return check_value(repeatability, range(0, 3), f"Invalid value repeatability: {repeatability}")
 
     def _send_cmd(self, iterable):
+        """Отправляет команду (последовательность байт) датчику по шине.
+        Sends a command (sequence of bytes) to the sensor on the bus"""
         self._write(bytearray(iterable))
 
     @micropython.native
@@ -40,7 +44,6 @@ class Sht85(BaseSensor, Iterator):
 
         Три режима повторяемости различаются продолжительностью измерения,
         уровнем шума и потреблением энергии.
-
         Если min_value == Истина, то возвращает минимальное время, иначе максимальное в микросекундах !!!"""
         if 0 == self.mode:  # single shot mode
             r = Sht85._check_rep(self.repeatability)
@@ -107,7 +110,7 @@ class Sht85(BaseSensor, Iterator):
         преобразует их в градусы Цельсия и проценты.
         Внимание! После запуска однократного измерения или запуска периодических измерений
         нужно ПОДОЖДАТЬ их результатов!!!
-        Сколько ждать микросекунд(!) возвращает функция get_conversion_cycle_time !"""
+        Сколько ждать микросекунд(!) возвращает метод get_conversion_cycle_time !"""
         if 1 == self.mode:
             t = 0xE0, 0x00
             self._send_cmd(t)   # FETCH (Table 10: Fetch Data command)
@@ -146,6 +149,7 @@ class Sht85(BaseSensor, Iterator):
         self.meas_per_sec = meas_per_sec
 
     def get_id(self) -> int:
+        """Возвращает идентификатор датчика. 4 байта"""
         t = (0x36, 0x82)
         self._send_cmd(t)
         time.sleep_us(500)
@@ -156,7 +160,8 @@ class Sht85(BaseSensor, Iterator):
 
     def soft_reset(self):
         """When the system is in idle state the soft reset command can be sent to the SHT85.
-        This triggers the sensor to reset its system controller and reloads calibration data from the memory."""
+        This triggers the sensor to reset its system controller and reloads calibration data from the memory.
+        Програмный сброс датчика"""
         t = (0x30, 0xA2)
         self._send_cmd(t)
         time.sleep_us(50000)
@@ -165,7 +170,15 @@ class Sht85(BaseSensor, Iterator):
         """The SHT85 is equipped with an internal heater, which is meant for plausibility checking only.
         The temperature increase achieved by the heater depends on various parameters and lies in the range of a
         few degrees centigrade. It can be switched on and off.
-        After a reset the heater is disabled (default condition)."""
+        After a reset the heater is disabled (default condition).
+
+        SHT85 оснащен внутренним нагревателем, который нужен только для проверки работоспособности датчика.
+        Повышение температуры, достигаемое нагревателем, зависит от различных параметров и находится в диапазоне
+        нескольких градусов по Цельсию. Его можно включать и выключать. После сброса нагреватель
+        отключается (состояние по умолчанию).
+
+        Если on == True, то нагреватель включается и наоборот.
+        If on == True, then the heater is turned on and vice versa."""
         t = (0x30, 0x6D if on else 0x66)
         self._send_cmd(t)
 
@@ -173,13 +186,23 @@ class Sht85(BaseSensor, Iterator):
         """The periodic data acquisition mode can be stopped using the break command.
         It is recommended to stop the periodic data acquisition prior to sending another command.
         Upon reception of the break command the sensor will abort the ongoing measurement and enter
-        the single shot mode. This takes 1ms."""
+        the single shot mode. This takes 1ms.
+
+        Режим периодического сбора данных можно остановить с помощью команды break.
+        Рекомендуется остановить периодический сбор данных перед отправкой другой команды.
+        При получении команды прерывания датчик прервет текущее измерение и перейдет в режим однократного измерения.
+        Это занимает 1 мс."""
         t = (0x30, 0x93)
         self._send_cmd(t)
 
     def get_status(self) -> int:
         """The status register contains information on the operational status of the heater,
-        the alert mode and on the execution status of the last command and the last write sequence."""
+        the alert mode and on the execution status of the last command and the last write sequence.
+        Pls. see "Table 17: Description of the status register." official documentation!
+
+        Регистр состояния содержит информацию о рабочем состоянии нагревателя, режиме оповещения и о состоянии
+         выполнения последней команды и последней последовательности записи.
+         Пожалуйста. см. «Table 17: Description of the status register». официальная документация!"""
         t = (0xF3, 0x2D)
         self._send_cmd(t)
         time.sleep_us(500)
@@ -189,5 +212,6 @@ class Sht85(BaseSensor, Iterator):
         return b[0] << 8 | b[1]
 
     def __next__(self):
+        """Итератор возвращает информацию только в режиме 1-periodic acquisition mode!!!"""
         if 1 == self.mode:  # periodic acquisition mode
             return self.read_temp_hum_pair()
