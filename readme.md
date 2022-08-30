@@ -1,5 +1,6 @@
 # SHT85
 Micropython module for SHT85 humidity&temperature sensor from Sensirion.
+Link: [https://sensirion.com/products/catalog/SHT85/]
 
 Just connect your SHT85 board to Arduino, ESP or any other board with MicroPython firmware.
 
