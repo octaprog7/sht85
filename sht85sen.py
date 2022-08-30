@@ -6,10 +6,9 @@
 
 import micropython
 
-from sensor_pack import bus_service
+from sensor_pack import bus_service, crc_mod
 from sensor_pack.base_sensor import BaseSensor, Iterator, check_value
 import time
-import crc1wire
 
 
 class Sht85(BaseSensor, Iterator):
@@ -73,7 +72,7 @@ class Sht85(BaseSensor, Iterator):
         else:
             offsets = 0, 3
         for ofs in offsets:
-            crc = crc1wire.crc8(buf[ofs:ofs + 2])
+            crc = crc_mod.crc8(buf[ofs:ofs + 2], 0x31, 0xFF)
             val = buf[ofs + 2]
             if crc != val:
                 raise IOError(f"Input data broken! Bad CRC! Calculated crc8: {hex(crc)} != {hex(val)}")
