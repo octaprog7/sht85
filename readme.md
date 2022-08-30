@@ -8,7 +8,6 @@ Supply voltage SHT85 from 2.15 to 5.5 volts, typical 3.3 Volt! Use four wires to
 Copy the following files to your board:
     main.py
     sht85sen.py
-    crc1wire.py
     sensor_pack folder
 
 Then open main.py in your IDE and run it!
