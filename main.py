@@ -4,7 +4,7 @@
 
 
 # Please read this before use!:
-from machine import I2C
+from machine import I2C, Pin
 import sht85sen
 from sensor_pack.bus_service import I2cAdapter
 import time
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     # https://docs.micropython.org/en/latest/library/machine.I2C.html#machine-i2c
     # i2c = I2C(0, scl=Pin(13), sda=Pin(12), freq=400_000) № для примера
     # bus =  I2C(scl=Pin(4), sda=Pin(5), freq=100000)   # на esp8266    !
-    i2c = I2C(0, freq=400_000)  # on Arduino Nano RP2040 Connect tested
+    i2c = I2C(id=0, scl=Pin(13), sda=Pin(12), freq=400000)  # on Arduino Nano RP2040 Connect tested
     adaptor = I2cAdapter(i2c)
     # ps - humidity sensor
     hum_sen = sht85sen.Sht85(adaptor, 0x44, True)
