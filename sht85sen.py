@@ -159,6 +159,7 @@ class Sht85(BaseSensor, Iterator):
         This triggers the sensor to reset its system controller and reloads calibration data from the memory."""
         t = (0x30, 0xA2)
         self._send_cmd(t)
+        time.sleep_us(50000)
 
     def set_heater(self, on: bool):
         """The SHT85 is equipped with an internal heater, which is meant for plausibility checking only.
