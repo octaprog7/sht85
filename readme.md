@@ -23,7 +23,3 @@ Then open main.py in your IDE and run it!
 ![alt text](https://github.com/octaprog7/sht85/blob/master/ide85.png)
 ## Breadboard
 ![alt text](https://github.com/octaprog7/sht85/blob/master/sht85.png)
-
-# Attention!
-Updated files for this project may not be compatible with outdated files from older projects! 
-Mindless copying can break your code!
